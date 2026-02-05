@@ -196,7 +196,7 @@ def truncate_text(value, length=200):
 def main():
     """Run the Flask development server."""
     print(f"Starting Perth Bears News Viewer at http://{VIEWER_HOST}:{VIEWER_PORT}")
-    app.run(host=VIEWER_HOST, port=VIEWER_PORT, debug=True)
+    app.run(host=VIEWER_HOST, port=VIEWER_PORT, debug=True, use_reloader=False)
 
 
 if __name__ == "__main__":
