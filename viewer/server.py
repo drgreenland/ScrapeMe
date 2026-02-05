@@ -3,7 +3,6 @@
 Perth Bears News Viewer - Web interface for viewing scraped articles.
 """
 import sys
-import subprocess
 import threading
 from pathlib import Path
 
@@ -121,31 +120,14 @@ def api_scrape():
         scraper_status["last_result"] = None
         from datetime import datetime
         try:
-            # Run the scraper as a subprocess
-            project_root = Path(__file__).parent.parent
+            # Import and run scraper directly
+            from scraper.main import main as run_main_scraper
+            exit_code = run_main_scraper()
 
-            # Use the venv Python if it exists, otherwise use current interpreter
-            venv_python = project_root / "venv" / "bin" / "python"
-            python_exe = str(venv_python) if venv_python.exists() else sys.executable
-            scraper_script = str(project_root / "scraper" / "main.py")
-
-            result = subprocess.run(
-                [python_exe, scraper_script],
-                capture_output=True,
-                text=True,
-                cwd=str(project_root),
-                timeout=600,  # 10 minute timeout
-            )
             scraper_status["last_result"] = {
-                "success": result.returncode == 0,
-                "output": result.stdout[-2000:] if result.stdout else "",
-                "error": result.stderr[-500:] if result.stderr else "",
-            }
-        except subprocess.TimeoutExpired:
-            scraper_status["last_result"] = {
-                "success": False,
-                "output": "",
-                "error": "Scraper timed out after 10 minutes",
+                "success": exit_code == 0,
+                "output": "Scraper completed",
+                "error": "" if exit_code == 0 else f"Exit code: {exit_code}",
             }
         except Exception as e:
             scraper_status["last_result"] = {
