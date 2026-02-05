@@ -1,0 +1,135 @@
+#!/usr/bin/env python3
+"""
+Perth Bears News Viewer - Web interface for viewing scraped articles.
+"""
+import sys
+from pathlib import Path
+
+# Add project root to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from flask import Flask, render_template, request, redirect, url_for, jsonify
+from config import VIEWER_HOST, VIEWER_PORT, ARTICLES_PER_PAGE
+from scraper.database import (
+    get_articles,
+    get_article_by_id,
+    mark_as_read,
+    mark_as_unread,
+    get_article_count,
+    get_sources,
+    get_stats,
+)
+
+app = Flask(__name__)
+
+
+@app.route("/")
+def index():
+    """Main article listing page."""
+    # Get query parameters
+    page = request.args.get("page", 1, type=int)
+    source = request.args.get("source", None)
+    unread_only = request.args.get("unread", "false").lower() == "true"
+    min_relevance = request.args.get("relevance", None, type=int)
+
+    # Calculate offset
+    offset = (page - 1) * ARTICLES_PER_PAGE
+
+    # Get articles
+    articles = get_articles(
+        limit=ARTICLES_PER_PAGE,
+        offset=offset,
+        source=source,
+        unread_only=unread_only,
+        min_relevance=min_relevance,
+    )
+
+    # Get total count for pagination
+    total_count = get_article_count(source=source, unread_only=unread_only)
+    total_pages = (total_count + ARTICLES_PER_PAGE - 1) // ARTICLES_PER_PAGE
+
+    # Get available sources for filter
+    sources = get_sources()
+
+    # Get stats
+    stats = get_stats()
+
+    return render_template(
+        "index.html",
+        articles=articles,
+        page=page,
+        total_pages=total_pages,
+        total_count=total_count,
+        sources=sources,
+        current_source=source,
+        unread_only=unread_only,
+        min_relevance=min_relevance,
+        stats=stats,
+    )
+
+
+@app.route("/article/<int:article_id>")
+def view_article(article_id):
+    """View a single article and mark as read."""
+    article = get_article_by_id(article_id)
+    if not article:
+        return "Article not found", 404
+
+    # Mark as read when viewed
+    mark_as_read(article_id)
+
+    return render_template("article.html", article=article)
+
+
+@app.route("/api/mark-read/<int:article_id>", methods=["POST"])
+def api_mark_read(article_id):
+    """API endpoint to mark article as read."""
+    success = mark_as_read(article_id)
+    return jsonify({"success": success})
+
+
+@app.route("/api/mark-unread/<int:article_id>", methods=["POST"])
+def api_mark_unread(article_id):
+    """API endpoint to mark article as unread."""
+    success = mark_as_unread(article_id)
+    return jsonify({"success": success})
+
+
+@app.route("/api/stats")
+def api_stats():
+    """API endpoint for database statistics."""
+    return jsonify(get_stats())
+
+
+@app.template_filter("format_date")
+def format_date(value):
+    """Format datetime for display."""
+    if not value:
+        return "Unknown"
+    if isinstance(value, str):
+        from dateutil import parser
+        try:
+            value = parser.parse(value)
+        except (ValueError, TypeError):
+            return value
+    return value.strftime("%d %b %Y, %H:%M")
+
+
+@app.template_filter("truncate_text")
+def truncate_text(value, length=200):
+    """Truncate text to specified length."""
+    if not value:
+        return ""
+    if len(value) <= length:
+        return value
+    return value[:length].rsplit(" ", 1)[0] + "..."
+
+
+def main():
+    """Run the Flask development server."""
+    print(f"Starting Perth Bears News Viewer at http://{VIEWER_HOST}:{VIEWER_PORT}")
+    app.run(host=VIEWER_HOST, port=VIEWER_PORT, debug=True)
+
+
+if __name__ == "__main__":
+    main()

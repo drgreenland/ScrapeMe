@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perth Bears News</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Perth Bears News</h1>
+        <p class="tagline">NRL Expansion Team News Aggregator</p>
+    </header>
+
+    <nav class="stats-bar">
+        <span class="stat">Total: {{ stats.total }}</span>
+        <span class="stat unread">Unread: {{ stats.unread }}</span>
+        <span class="stat">Read: {{ stats.read }}</span>
+    </nav>
+
+    <section class="filters">
+        <form method="get" action="{{ url_for('index') }}">
+            <div class="filter-group">
+                <label for="source">Source:</label>
+                <select name="source" id="source">
+                    <option value="">All Sources</option>
+                    {% for src in sources %}
+                    <option value="{{ src }}" {% if src == current_source %}selected{% endif %}>{{ src }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="relevance">Relevance:</label>
+                <select name="relevance" id="relevance">
+                    <option value="">All</option>
+                    <option value="2" {% if min_relevance == 2 %}selected{% endif %}>Primary Only</option>
+                    <option value="1" {% if min_relevance == 1 %}selected{% endif %}>Any Match</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>
+                    <input type="checkbox" name="unread" value="true" {% if unread_only %}checked{% endif %}>
+                    Unread only
+                </label>
+            </div>
+
+            <button type="submit">Filter</button>
+            <a href="{{ url_for('index') }}" class="btn-reset">Reset</a>
+        </form>
+    </section>
+
+    <main class="articles-list">
+        {% if articles %}
+            {% for article in articles %}
+            <article class="article-card {% if article.is_read %}read{% endif %} relevance-{{ article.relevance_score }}">
+                <div class="article-meta">
+                    <span class="source">{{ article.source }}</span>
+                    <span class="date">{{ article.scraped_date|format_date }}</span>
+                    {% if article.relevance_score == 2 %}
+                    <span class="badge primary">Primary</span>
+                    {% else %}
+                    <span class="badge secondary">Secondary</span>
+                    {% endif %}
+                </div>
+
+                <h2>
+                    <a href="{{ article.url }}" target="_blank" rel="noopener" onclick="markRead({{ article.id }})">
+                        {{ article.title }}
+                    </a>
+                </h2>
+
+                {% if article.summary %}
+                <p class="summary">{{ article.summary|truncate_text(300) }}</p>
+                {% endif %}
+
+                <div class="keywords">
+                    {% if article.matched_keywords %}
+                        {% for keyword in article.matched_keywords %}
+                        <span class="keyword">{{ keyword }}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div class="article-actions">
+                    <a href="{{ url_for('view_article', article_id=article.id) }}" class="btn-view">View Details</a>
+                    {% if article.is_read %}
+                    <button onclick="markUnread({{ article.id }})" class="btn-unread">Mark Unread</button>
+                    {% else %}
+                    <button onclick="markRead({{ article.id }})" class="btn-read">Mark Read</button>
+                    {% endif %}
+                    <button onclick="toggleNotes({{ article.id }})" class="btn-notes">Add Note</button>
+                </div>
+
+                <div class="notes-section" id="notes-{{ article.id }}" style="display: none;">
+                    <textarea
+                        id="note-text-{{ article.id }}"
+                        placeholder="Add your notes here... (copy/paste to save)"
+                        rows="3"
+                    ></textarea>
+                    <div class="notes-actions">
+                        <button onclick="copyNote({{ article.id }}, '{{ article.title|e }}')" class="btn-copy">Copy Note</button>
+                        <button onclick="toggleNotes({{ article.id }})" class="btn-close-notes">Close</button>
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
+        {% else %}
+            <div class="no-articles">
+                <p>No articles found matching your criteria.</p>
+                <p>Try adjusting your filters or run the scraper to fetch new articles.</p>
+            </div>
+        {% endif %}
+    </main>
+
+    {% if total_pages > 1 %}
+    <nav class="pagination">
+        {% if page > 1 %}
+        <a href="?page={{ page - 1 }}{% if current_source %}&source={{ current_source }}{% endif %}{% if unread_only %}&unread=true{% endif %}{% if min_relevance %}&relevance={{ min_relevance }}{% endif %}">&laquo; Previous</a>
+        {% endif %}
+
+        <span class="page-info">Page {{ page }} of {{ total_pages }} ({{ total_count }} articles)</span>
+
+        {% if page < total_pages %}
+        <a href="?page={{ page + 1 }}{% if current_source %}&source={{ current_source }}{% endif %}{% if unread_only %}&unread=true{% endif %}{% if min_relevance %}&relevance={{ min_relevance }}{% endif %}">Next &raquo;</a>
+        {% endif %}
+    </nav>
+    {% endif %}
+
+    <footer>
+        <p>Perth Bears News Scraper &mdash; For personal use only</p>
+    </footer>
+
+    <script>
+        function markRead(articleId) {
+            fetch(`/api/mark-read/${articleId}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const card = document.querySelector(`article:has(a[href*="article_id=${articleId}"])`);
+                        if (card) card.classList.add('read');
+                    }
+                });
+        }
+
+        function markUnread(articleId) {
+            fetch(`/api/mark-unread/${articleId}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    }
+                });
+        }
+
+        function toggleNotes(articleId) {
+            const notesSection = document.getElementById(`notes-${articleId}`);
+            if (notesSection.style.display === 'none') {
+                notesSection.style.display = 'block';
+                document.getElementById(`note-text-${articleId}`).focus();
+            } else {
+                notesSection.style.display = 'none';
+            }
+        }
+
+        function copyNote(articleId, title) {
+            const noteText = document.getElementById(`note-text-${articleId}`).value;
+            const fullNote = `--- ${title} ---\n${noteText}\n\n`;
+            navigator.clipboard.writeText(fullNote).then(() => {
+                alert('Note copied to clipboard!');
+            });
+        }
+    </script>
+</body>
+</html>

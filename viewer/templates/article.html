@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ article.title }} - Perth Bears News</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1><a href="{{ url_for('index') }}">Perth Bears News</a></h1>
+    </header>
+
+    <nav class="breadcrumb">
+        <a href="{{ url_for('index') }}">&laquo; Back to Articles</a>
+    </nav>
+
+    <main class="article-detail">
+        <article>
+            <header class="article-header">
+                <div class="article-meta">
+                    <span class="source">{{ article.source }}</span>
+                    {% if article.published_date %}
+                    <span class="date">Published: {{ article.published_date|format_date }}</span>
+                    {% endif %}
+                    <span class="date">Scraped: {{ article.scraped_date|format_date }}</span>
+                    {% if article.relevance_score == 2 %}
+                    <span class="badge primary">Primary Match</span>
+                    {% else %}
+                    <span class="badge secondary">Secondary Match</span>
+                    {% endif %}
+                </div>
+
+                <h1>{{ article.title }}</h1>
+
+                <div class="keywords">
+                    <strong>Matched Keywords:</strong>
+                    {% if article.matched_keywords %}
+                        {% for keyword in article.matched_keywords %}
+                        <span class="keyword">{{ keyword }}</span>
+                        {% endfor %}
+                    {% else %}
+                        <span>None</span>
+                    {% endif %}
+                </div>
+
+                <a href="{{ article.url }}" target="_blank" rel="noopener" class="btn-original">
+                    Read Original Article &rarr;
+                </a>
+            </header>
+
+            {% if article.summary %}
+            <section class="article-summary">
+                <h2>Summary</h2>
+                <p>{{ article.summary }}</p>
+            </section>
+            {% endif %}
+
+            {% if article.full_text %}
+            <section class="article-content">
+                <h2>Full Text</h2>
+                <div class="content-body">
+                    {{ article.full_text|safe }}
+                </div>
+            </section>
+            {% endif %}
+        </article>
+    </main>
+
+    <footer>
+        <p>Perth Bears News Scraper &mdash; For personal use only</p>
+    </footer>
+</body>
+</html>
