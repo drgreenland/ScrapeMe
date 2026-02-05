@@ -174,6 +174,8 @@
             });
         }
 
+        let scraperStartTime = null;
+
         function runScraper() {
             const btn = document.getElementById('update-btn');
             const status = document.getElementById('update-status');
@@ -183,11 +185,14 @@
             status.textContent = 'Starting scraper...';
             status.className = 'update-status running';
 
+            scraperStartTime = new Date().toISOString();
+
             fetch('/api/scrape', { method: 'POST' })
                 .then(response => response.json())
                 .then(data => {
+                    console.log('Scrape start response:', data);
                     if (data.success) {
-                        pollScraperStatus();
+                        setTimeout(pollScraperStatus, 1000);
                     } else {
                         status.textContent = data.message;
                         status.className = 'update-status error';
@@ -196,6 +201,7 @@
                     }
                 })
                 .catch(err => {
+                    console.error('Scrape start error:', err);
                     status.textContent = 'Error starting scraper';
                     status.className = 'update-status error';
                     btn.disabled = false;
@@ -210,21 +216,34 @@
             fetch('/api/scrape/status')
                 .then(response => response.json())
                 .then(data => {
+                    console.log('Poll status:', data);
+
                     if (data.running) {
                         status.textContent = 'Scraping in progress...';
                         setTimeout(pollScraperStatus, 2000);
-                    } else if (data.last_result) {
-                        if (data.last_result.success) {
-                            status.textContent = 'Update complete!';
+                    } else if (data.last_run && data.last_run > scraperStartTime) {
+                        // Scraper finished after we started it
+                        if (data.last_result && data.last_result.success) {
+                            status.textContent = 'Update complete! Refreshing...';
                             status.className = 'update-status success';
                             setTimeout(() => location.reload(), 1500);
                         } else {
-                            status.textContent = 'Update failed';
+                            const errMsg = data.last_result?.error || 'Unknown error';
+                            status.textContent = 'Update failed: ' + errMsg.substring(0, 50);
                             status.className = 'update-status error';
+                            console.error('Scraper error:', data.last_result);
                             btn.disabled = false;
                             btn.textContent = 'Update Now';
                         }
+                    } else {
+                        // Still waiting for this run to complete
+                        status.textContent = 'Waiting for scraper...';
+                        setTimeout(pollScraperStatus, 2000);
                     }
+                })
+                .catch(err => {
+                    console.error('Poll error:', err);
+                    setTimeout(pollScraperStatus, 2000);
                 });
         }
     </script>
