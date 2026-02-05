@@ -15,7 +15,10 @@
       "Bash(git commit:*)",
       "Bash(git remote add:*)",
       "Bash(git push:*)",
-      "Bash(git rev-parse:*)"
+      "Bash(git rev-parse:*)",
+      "Bash(curl:*)",
+      "Bash(./venv/bin/python -c \"\nimport subprocess\nimport sys\nfrom pathlib import Path\n\nproject_root = Path.cwd\\(\\)\nvenv_python = project_root / ''venv'' / ''bin'' / ''python''\nscraper_script = project_root / ''scraper'' / ''main.py''\n\nprint\\(f''Python: {venv_python}''\\)\nprint\\(f''Exists: {venv_python.exists\\(\\)}''\\)\nprint\\(f''Script: {scraper_script}''\\)\nprint\\(f''Exists: {scraper_script.exists\\(\\)}''\\)\n\")",
+      "Bash(./venv/bin/python:*)"
     ]
   }
 }
