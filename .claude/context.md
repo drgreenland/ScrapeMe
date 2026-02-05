@@ -1,8 +1,9 @@
 # Project: ScrapeMe (Perth Bears News Scraper)
 
 **Created:** 2026-02-05 16:36:31
-**Last Updated:** 2026-02-05 16:36:31
-**Iterations:** 0
+**Last Updated:** 2026-02-05 16:48:41
+**Iterations:** 1
+**Repository:** https://github.com/drgreenland/ScrapeMe.git
 
 ## Project Overview
 
@@ -29,7 +30,11 @@ A Python web scraper that monitors Australian newspapers for Perth Bears Rugby L
 
 ## Development History
 
-_No iterations saved yet_
+### Iteration 1 - 2026-02-05
+- **Goal:** Build complete Perth Bears News Scraper from scratch
+- **Changes:** 8 source scrapers, SQLite database, Flask web viewer with filtering and notes
+- **Outcome:** Fully functional scraper and viewer; some sources need selector fixes
+- **Learnings:** macOS uses port 5000 for AirPlay; Perth Bears coverage is sparse pre-2027
 
 ## Active Context
 
