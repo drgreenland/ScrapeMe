@@ -54,6 +54,8 @@ header .tagline {
     display: flex;
     gap: 1.5rem;
     justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
 }
 
 .stat {
@@ -64,6 +66,46 @@ header .tagline {
 .stat.unread {
     color: var(--accent-color);
     font-weight: 600;
+}
+
+.btn-update {
+    padding: 0.4rem 1rem;
+    background: var(--success-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-left: 1rem;
+}
+
+.btn-update:hover {
+    background: #2f855a;
+}
+
+.btn-update:disabled {
+    background: var(--text-muted);
+    cursor: not-allowed;
+}
+
+.update-status {
+    font-size: 0.85rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+}
+
+.update-status.running {
+    color: var(--primary-color);
+}
+
+.update-status.success {
+    color: var(--success-color);
+    font-weight: 600;
+}
+
+.update-status.error {
+    color: #e53e3e;
 }
 
 .filters {

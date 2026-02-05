@@ -3,6 +3,8 @@
 Perth Bears News Viewer - Web interface for viewing scraped articles.
 """
 import sys
+import subprocess
+import threading
 from pathlib import Path
 
 # Add project root to path
@@ -21,6 +23,13 @@ from scraper.database import (
 )
 
 app = Flask(__name__)
+
+# Scraper status tracking
+scraper_status = {
+    "running": False,
+    "last_result": None,
+    "last_run": None,
+}
 
 
 @app.route("/")
@@ -99,6 +108,52 @@ def api_mark_unread(article_id):
 def api_stats():
     """API endpoint for database statistics."""
     return jsonify(get_stats())
+
+
+@app.route("/api/scrape", methods=["POST"])
+def api_scrape():
+    """API endpoint to trigger a manual scrape."""
+    if scraper_status["running"]:
+        return jsonify({"success": False, "message": "Scraper already running"})
+
+    def run_scraper():
+        scraper_status["running"] = True
+        scraper_status["last_result"] = None
+        try:
+            # Run the scraper as a subprocess
+            project_root = Path(__file__).parent.parent
+            result = subprocess.run(
+                [sys.executable, str(project_root / "scraper" / "main.py")],
+                capture_output=True,
+                text=True,
+                cwd=str(project_root),
+            )
+            scraper_status["last_result"] = {
+                "success": result.returncode == 0,
+                "output": result.stdout[-2000:] if result.stdout else "",
+                "error": result.stderr[-500:] if result.stderr else "",
+            }
+        except Exception as e:
+            scraper_status["last_result"] = {
+                "success": False,
+                "output": "",
+                "error": str(e),
+            }
+        finally:
+            scraper_status["running"] = False
+            from datetime import datetime
+            scraper_status["last_run"] = datetime.now().isoformat()
+
+    thread = threading.Thread(target=run_scraper)
+    thread.start()
+
+    return jsonify({"success": True, "message": "Scraper started"})
+
+
+@app.route("/api/scrape/status")
+def api_scrape_status():
+    """API endpoint to check scraper status."""
+    return jsonify(scraper_status)
 
 
 @app.template_filter("format_date")

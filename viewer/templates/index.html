@@ -16,6 +16,8 @@
         <span class="stat">Total: {{ stats.total }}</span>
         <span class="stat unread">Unread: {{ stats.unread }}</span>
         <span class="stat">Read: {{ stats.read }}</span>
+        <button id="update-btn" onclick="runScraper()" class="btn-update">Update Now</button>
+        <span id="update-status" class="update-status"></span>
     </nav>
 
     <section class="filters">
@@ -170,6 +172,60 @@
             navigator.clipboard.writeText(fullNote).then(() => {
                 alert('Note copied to clipboard!');
             });
+        }
+
+        function runScraper() {
+            const btn = document.getElementById('update-btn');
+            const status = document.getElementById('update-status');
+
+            btn.disabled = true;
+            btn.textContent = 'Updating...';
+            status.textContent = 'Starting scraper...';
+            status.className = 'update-status running';
+
+            fetch('/api/scrape', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        pollScraperStatus();
+                    } else {
+                        status.textContent = data.message;
+                        status.className = 'update-status error';
+                        btn.disabled = false;
+                        btn.textContent = 'Update Now';
+                    }
+                })
+                .catch(err => {
+                    status.textContent = 'Error starting scraper';
+                    status.className = 'update-status error';
+                    btn.disabled = false;
+                    btn.textContent = 'Update Now';
+                });
+        }
+
+        function pollScraperStatus() {
+            const btn = document.getElementById('update-btn');
+            const status = document.getElementById('update-status');
+
+            fetch('/api/scrape/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.running) {
+                        status.textContent = 'Scraping in progress...';
+                        setTimeout(pollScraperStatus, 2000);
+                    } else if (data.last_result) {
+                        if (data.last_result.success) {
+                            status.textContent = 'Update complete!';
+                            status.className = 'update-status success';
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            status.textContent = 'Update failed';
+                            status.className = 'update-status error';
+                            btn.disabled = false;
+                            btn.textContent = 'Update Now';
+                        }
+                    }
+                });
         }
     </script>
 </body>
