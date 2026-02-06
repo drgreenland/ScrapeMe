@@ -8,6 +8,7 @@ from .foxsports import FoxSportsScraper
 from .smh import SMHScraper
 from .theage import TheAgeScraper
 from .codesports import CodeSportsScraper
+from .newsnow import NewsNowScraper
 
 __all__ = [
     "BaseScraper",
@@ -19,4 +20,5 @@ __all__ = [
     "SMHScraper",
     "TheAgeScraper",
     "CodeSportsScraper",
+    "NewsNowScraper",
 ]

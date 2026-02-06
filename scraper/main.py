@@ -23,6 +23,7 @@ from scraper.sources import (
     SMHScraper,
     TheAgeScraper,
     CodeSportsScraper,
+    NewsNowScraper,
 )
 
 
@@ -36,6 +37,7 @@ SCRAPER_CLASSES = {
     "smh": SMHScraper,
     "theage": TheAgeScraper,
     "codesports": CodeSportsScraper,
+    "newsnow": NewsNowScraper,
 }
 
 

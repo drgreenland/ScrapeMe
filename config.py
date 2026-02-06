@@ -107,6 +107,13 @@ SOURCES = {
         "enabled": True,
         "priority": 2,
     },
+    "newsnow": {
+        "name": "NewsNow",
+        "base_url": "https://www.newsnow.com",
+        "news_url": "https://www.newsnow.com/au/Sport/NRL",
+        "enabled": True,
+        "priority": 2,
+    },
 }
 
 # Logging configuration
