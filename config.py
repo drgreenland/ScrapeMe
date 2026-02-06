@@ -43,7 +43,6 @@ KEYWORDS = {
         "NRL expansion",
         "Western Australia NRL",
         "WA NRL",
-        "Mal Meninga",
         "North Sydney Bears",
         "Perth NRL",
     ],

@@ -93,11 +93,38 @@ class BaseScraper(ABC):
             return url
         return urljoin(self.base_url, url)
 
+    # Minimum word length for partial keyword matching
+    # Words shorter than this won't match individually (e.g., "Mal", "NRL", "WA")
+    MIN_PARTIAL_WORD_LENGTH = 5
+
+    def _check_keyword(self, keyword: str, text_lower: str) -> bool:
+        """
+        Check if a keyword matches the text.
+        For multi-word keywords, also matches if any individual word (5+ chars) is found.
+        """
+        keyword_lower = keyword.lower()
+
+        # Check exact phrase match first
+        if keyword_lower in text_lower:
+            return True
+
+        # For multi-word keywords, check individual words
+        words = keyword_lower.split()
+        if len(words) > 1:
+            for word in words:
+                if len(word) >= self.MIN_PARTIAL_WORD_LENGTH and word in text_lower:
+                    return True
+
+        return False
+
     def check_keywords(self, text: str) -> tuple[list[str], int]:
         """
         Check text against configured keywords.
         Returns (matched_keywords, relevance_score).
         Score: 2 for primary match, 1 for secondary only.
+
+        For multi-word keywords like "Mal Meninga", also matches individual
+        words if they're 5+ characters (e.g., "Meninga" matches).
         """
         if not text:
             return [], 0
@@ -107,14 +134,14 @@ class BaseScraper(ABC):
 
         # Check primary keywords first
         for keyword in KEYWORDS["primary"]:
-            if keyword.lower() in text_lower:
+            if self._check_keyword(keyword, text_lower):
                 matched.append(keyword)
 
         has_primary = len(matched) > 0
 
         # Check secondary keywords
         for keyword in KEYWORDS["secondary"]:
-            if keyword.lower() in text_lower:
+            if self._check_keyword(keyword, text_lower):
                 matched.append(keyword)
 
         if not matched:
