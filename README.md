@@ -52,7 +52,7 @@ python scraper/main.py
 python viewer/server.py
 ```
 
-Then open http://127.0.0.1:5000 in your browser.
+Then open http://127.0.0.1:5050 in your browser.
 
 ### 4. Setup Scheduled Scraping (Optional)
 

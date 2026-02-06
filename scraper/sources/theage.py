@@ -1,5 +1,6 @@
 """
 Scraper for The Age (theage.com.au).
+https://www.theage.com.au/sport/nrl
 """
 from typing import Optional
 from bs4 import BeautifulSoup

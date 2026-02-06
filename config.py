@@ -43,10 +43,8 @@ KEYWORDS = {
         "NRL expansion",
         "Western Australia NRL",
         "WA NRL",
-        "Toby Sexton",
-        "Harry Newman",
+        "Mal Meninga",
         "North Sydney Bears",
-        "Brisbane Tigers",
         "Perth NRL",
     ],
 }

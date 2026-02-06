@@ -23,7 +23,7 @@ if [ ! -f "$PYTHON_PATH" ]; then
 fi
 
 # Create the cron job entry
-CRON_JOB="0 6,10,14,18,22 * * * $PYTHON_PATH $SCRAPER_PATH >> $LOG_PATH 2>&1"
+CRON_JOB="0 6,8,10,12,14,16,18,20,22 * * * $PYTHON_PATH $SCRAPER_PATH >> $LOG_PATH 2>&1"
 
 # Check if cron job already exists
 if crontab -l 2>/dev/null | grep -q "$SCRAPER_PATH"; then

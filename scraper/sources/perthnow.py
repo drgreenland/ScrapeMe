@@ -1,5 +1,6 @@
 """
 Scraper for PerthNow (perthnow.com.au).
+https://www.perthnow.com.au/sport/rugby-league
 """
 from typing import Optional
 from bs4 import BeautifulSoup

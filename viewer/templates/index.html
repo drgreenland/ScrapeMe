@@ -16,6 +16,7 @@
         <span class="stat">Total: {{ stats.total }}</span>
         <span class="stat unread">Unread: {{ stats.unread }}</span>
         <span class="stat">Read: {{ stats.read }}</span>
+        <span class="stat last-checked">Last checked: {{ last_checked|format_date if last_checked else 'Never' }}</span>
         <button id="update-btn" onclick="runScraper()" class="btn-update">Update Now</button>
         <span id="update-status" class="update-status"></span>
     </nav>

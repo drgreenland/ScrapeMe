@@ -52,11 +52,38 @@ def init_database():
                 is_read INTEGER DEFAULT 0
             );
 
+            CREATE TABLE IF NOT EXISTS metadata (
+                key TEXT PRIMARY KEY,
+                value TEXT
+            );
+
             CREATE INDEX IF NOT EXISTS idx_scraped_date ON articles(scraped_date DESC);
             CREATE INDEX IF NOT EXISTS idx_source ON articles(source);
             CREATE INDEX IF NOT EXISTS idx_relevance ON articles(relevance_score DESC);
             CREATE INDEX IF NOT EXISTS idx_is_read ON articles(is_read);
         """)
+
+
+def set_last_checked():
+    """Update the last_checked timestamp to now."""
+    with get_db() as conn:
+        conn.execute(
+            """
+            INSERT OR REPLACE INTO metadata (key, value)
+            VALUES ('last_checked', ?)
+            """,
+            (datetime.now().isoformat(),)
+        )
+
+
+def get_last_checked() -> Optional[str]:
+    """Get the last_checked timestamp."""
+    with get_db() as conn:
+        cursor = conn.execute(
+            "SELECT value FROM metadata WHERE key = 'last_checked'"
+        )
+        row = cursor.fetchone()
+        return row[0] if row else None
 
 
 def article_exists(url: str) -> bool:

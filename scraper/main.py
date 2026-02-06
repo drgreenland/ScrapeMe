@@ -13,7 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from config import SOURCES, LOG_FILE, LOG_FORMAT, LOG_LEVEL
-from scraper.database import insert_article, get_stats, init_database
+from scraper.database import insert_article, get_stats, init_database, set_last_checked
 from scraper.sources import (
     NRLOfficialScraper,
     TheRoarScraper,
@@ -139,6 +139,9 @@ def main():
     stats = get_stats()
     logger.info(f"  Database total: {stats['total']} articles ({stats['unread']} unread)")
     logger.info("=" * 60)
+
+    # Record that we checked for updates
+    set_last_checked()
 
     # Return exit code (0 = success, 1 = partial failure, 2 = complete failure)
     if errors and total_saved == 0:

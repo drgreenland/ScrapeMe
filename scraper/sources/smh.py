@@ -1,5 +1,6 @@
 """
 Scraper for Sydney Morning Herald (smh.com.au).
+maybe use https://www.smh.com.au/sport/nrl
 """
 from typing import Optional
 from bs4 import BeautifulSoup

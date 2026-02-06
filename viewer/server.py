@@ -19,6 +19,7 @@ from scraper.database import (
     get_article_count,
     get_sources,
     get_stats,
+    get_last_checked,
 )
 
 app = Flask(__name__)
@@ -61,6 +62,7 @@ def index():
 
     # Get stats
     stats = get_stats()
+    last_checked = get_last_checked()
 
     return render_template(
         "index.html",
@@ -73,6 +75,7 @@ def index():
         unread_only=unread_only,
         min_relevance=min_relevance,
         stats=stats,
+        last_checked=last_checked,
     )
 
 
