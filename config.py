@@ -82,7 +82,7 @@ SOURCES = {
     "foxsports": {
         "name": "Fox Sports",
         "base_url": "https://www.foxsports.com.au",
-        "news_url": "https://www.foxsports.com.au/nrl",
+        "news_url": "https://www.foxsports.com.au/nrl/latest-news",
         "enabled": True,
         "priority": 2,
     },
@@ -113,6 +113,13 @@ SOURCES = {
         "news_url": "https://www.newsnow.com/au/Sport/NRL",
         "enabled": True,
         "priority": 2,
+    },
+    "nine": {
+        "name": "Nine.com.au",
+        "base_url": "https://www.nine.com.au",
+        "news_url": "https://www.nine.com.au/sport/nrl",
+        "enabled": True,
+        "priority": 1,  # High priority - has Perth Bears topic page
     },
 }
 

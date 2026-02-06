@@ -24,6 +24,7 @@ from scraper.sources import (
     TheAgeScraper,
     CodeSportsScraper,
     NewsNowScraper,
+    NineScraper,
 )
 
 
@@ -38,6 +39,7 @@ SCRAPER_CLASSES = {
     "theage": TheAgeScraper,
     "codesports": CodeSportsScraper,
     "newsnow": NewsNowScraper,
+    "nine": NineScraper,
 }
 
 
