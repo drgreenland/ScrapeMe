@@ -12,17 +12,21 @@ class NineScraper(BaseScraper):
 
     # Additional topic pages to check
     TOPIC_PAGES = [
-        "https://www.nine.com.au/topic/perth-bears-6hjh",
         "https://www.nine.com.au/topic/the-mole-26f7",
     ]
+
+    # Perth Bears topic page - articles here are auto-included
+    PERTH_BEARS_PAGE = "https://www.nine.com.au/topic/perth-bears-6hjh"
 
     def get_article_urls(self) -> list[dict]:
         """Get article URLs from Nine NRL section and topic pages."""
         # Collect all URL -> title mappings, preferring non-empty titles
         url_titles = {}
+        # Track URLs from Perth Bears page for auto-inclusion
+        perth_bears_urls = set()
 
-        # Check main news URL and topic pages
-        urls_to_check = [self.news_url] + self.TOPIC_PAGES
+        # Check main news URL, topic pages, and Perth Bears page
+        urls_to_check = [self.news_url] + self.TOPIC_PAGES + [self.PERTH_BEARS_PAGE]
 
         for page_url in urls_to_check:
             html = self.fetch_page(page_url)
@@ -55,11 +59,19 @@ class NineScraper(BaseScraper):
                 if url not in url_titles or (title and len(title) > len(url_titles.get(url, ""))):
                     url_titles[url] = title
 
+                # Track if this URL came from Perth Bears page
+                if page_url == self.PERTH_BEARS_PAGE:
+                    perth_bears_urls.add(url)
+
         # Convert to list, filtering out entries without titles
         articles = []
         for url, title in url_titles.items():
             if title and len(title) >= 10:
-                articles.append({"url": url, "title": title})
+                articles.append({
+                    "url": url,
+                    "title": title,
+                    "from_perth_bears_page": url in perth_bears_urls,
+                })
 
         return articles
 
@@ -124,3 +136,70 @@ class NineScraper(BaseScraper):
             "full_text": full_text,
             "published_date": published_date,
         }
+
+    def scrape(self) -> list[dict]:
+        """
+        Override scrape to auto-include articles from Perth Bears topic page.
+        """
+        self.logger.info(f"Starting scrape for {self.source_name}")
+        articles = []
+
+        # Get article URLs from listing
+        article_refs = self.get_article_urls()
+        self.logger.info(f"Found {len(article_refs)} article URLs")
+
+        for ref in article_refs:
+            url = ref["url"]
+            preliminary_title = ref.get("title", "")
+            from_perth_bears = ref.get("from_perth_bears_page", False)
+
+            # Check keywords in title first (quick filter)
+            matched_keywords, relevance = self.check_keywords(preliminary_title)
+
+            # Auto-include articles from Perth Bears page
+            if from_perth_bears and not matched_keywords:
+                matched_keywords = ["Perth Bears (topic)"]
+                relevance = 2  # Primary relevance
+
+            # If no match in title and not from Perth Bears page, skip
+            if not matched_keywords and preliminary_title:
+                self.logger.debug(f"Skipping (no keyword match in title): {preliminary_title}")
+                continue
+
+            # Fetch full article
+            html = self.fetch_page(url)
+            if not html:
+                continue
+
+            # Parse article content
+            article_data = self.parse_article(url, html)
+            if not article_data:
+                self.logger.warning(f"Failed to parse article: {url}")
+                continue
+
+            # Check keywords in full content (unless already matched from Perth Bears page)
+            if not from_perth_bears:
+                full_text = f"{article_data.get('title', '')} {article_data.get('summary', '')} {article_data.get('full_text', '')}"
+                matched_keywords, relevance = self.check_keywords(full_text)
+
+                if not matched_keywords:
+                    self.logger.debug(f"Skipping (no keyword match in content): {url}")
+                    continue
+
+            # Build final article dict
+            article = {
+                "url": url,
+                "title": article_data.get("title", preliminary_title),
+                "source": self.source_name,
+                "summary": article_data.get("summary"),
+                "full_text": article_data.get("full_text"),
+                "published_date": article_data.get("published_date"),
+                "matched_keywords": matched_keywords,
+                "relevance_score": relevance,
+            }
+
+            articles.append(article)
+            self.logger.info(f"Found relevant article: {article['title'][:60]}...")
+
+        self.logger.info(f"Completed scrape for {self.source_name}: {len(articles)} relevant articles")
+        return articles
